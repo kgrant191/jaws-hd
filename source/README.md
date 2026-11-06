@@ -1,4 +1,4 @@
-# Jaws HD v0.5.2
+# Jaws HD v0.7.1
 
 Editable source for the MesenCE 2.2.1 4× graphics pack.
 
@@ -18,7 +18,7 @@ The supported source ROM SHA-1 is `c102da80b2ded9364ebd707df14cbc3bd40bd65a`. Th
 - `art/` contains the paintings and isolated sprites, including separate juvenile and adult great white masters, the shoal, the full coastal chart and the existing animated title.
 - `encounters.py` fits both sharks to their native frame layouts. The adult uses three swimming body poses and three independent tail positions. The juvenile has a separate hit layout using palette FF200F27, snout tile $4A8 and the hit pose’s fin positions. The bonus plane uses a dedicated side-profile master and interchanges the bottom nose cells $413 and $407. Its parachuted charge and the three impact-bubble stages are assembled here as well. This module also builds the overhead fin, iron boat shot and shallow-water surface layers.
 - `sprite_motion.py` assembles the boat headings, diver's kick, hit and death poses, drops, stingray and jellyfish atlases. The map's four headings use the same overhead boat painting. Horizontal travel follows the game's five moving frames, with its own clean idle hull. The stopped-pose pointer at $0688–$0689 and the port dialog select the appropriate stern.
-- `build_pack.py` decodes the 32 by 24 metatile world chart from the supported ROM, follows horizontal and vertical camera movement and handles the signed western boundary. The two port layouts, encounter banners and live HUD share the game's own state.
+- `build_pack.py` covers the chart’s dedicated background CHR page across all four map palettes, follows horizontal and vertical camera movement and handles the signed western boundary. The two port layouts, encounter banners and live HUD share the game's own state.
 - `data/` holds measured scene signatures, sprite identities, palettes and fin layouts from the recordings. The pack asks Mesen to lift the sprite-per-scanline limit so firing, sharks and schools can share a row without losing pieces.
 
 ## Mixed jellyfish
@@ -38,3 +38,27 @@ The 11,578-frame opening, 3,045-frame feedback and 5,628-frame Jaws encounter re
 The native map scroll byte wraps from $FF to $00 while the boat crosses the western edge. CPU position and rendered scroll can refer to different frames. A second coastal texture covers both sides of the wrap. Near zero it uses a 17/16 horizontal ratio, for which Mesen adds exactly 15 native pixels to scroll values $F8–$FF and zero to $00–$07. Both texture windows display the same western coastline.
 
 The harbor banner follows the visible PPU text row. The queued text selects the new message on the frame before the nametable catches up. The 1,110-frame port movie covers the western boundary, east/west turns, shell shortage and transition to a shallow Jaws encounter. A supplemental steering check crosses the boundary in reverse.
+
+
+## Harbor and adult Jaws in v0.6.0
+
+The navigation recording covers the receiver purchase, scrolling in both directions and two harbor upgrades. The incoming map column and its attribute byte can be updated on different frames. The four map palettes share transparent terrain replacements so the painted chart stays visible throughout the update. The receiver and harbor match the tiles actually displayed, including the first and last frames of each visit.
+
+Jaws starts at $1400 health. The hit routine subtracts damage from the little-endian value at $0388–$0389. The coarse HUD meter reads only $0389. The adult shark uses the wounded atlas when the full value is at or below $0A00. Both appearances use the same head and fin layout, three body poses, independent tail and native mirroring. A combat replay initialized just above half health crosses the threshold on an in-game hit. Additional boundary checks use $0A01, $0A00 and $09FF.
+
+## Final encounter in v0.7.0
+
+The game sets bit $20 in $0306 when the underwater encounter ends. It pulses the power meter between full and empty while the defeated actor is still on screen. This flag takes precedence over the normal half-health check for adult shark sprites. HUD counters use the original live digits with a smaller cap and extra headroom inside each 32-pixel HD cell.
+
+`finale.py` uses the bow, fin, sinking and flyby sprite registrations in `data/finale-poses.json`. Each cell records the CHR tile index, X and Y in NES pixels, and original sprite attributes. The surface vista follows the PPU camera. The strobe number, bow movement, hit effect and flyby all follow native sprite changes. The first banked pass uses one painted aircraft anchored to the plane’s flight path so both wings stay continuous. The closing title appears when the game draws its title tiles.
+
+The 3,604-frame ending recording covers the last underwater hit, all six meter pulses, both strobe uses, the successful bow strike, the descent and the sunset flyby.
+
+
+## Final strike in v0.7.1
+
+`strike.py` reads the four strobe animation sequences from the supported ROM. The scene compositor follows Jaws’s signed X coordinate, waterline, current pose and facing direction. The closest full breach is 280 × 400 HD pixels. The visible body rises out of a separate line of foam on the early frames.
+
+The game accepts the fatal thrust while Jaws is in the eight-by-eight contact window. The finishing artwork uses both the native success flag and the rendered impact tile at the bow tip. It stays aligned to the spike in either facing direction. The underwater descent uses a separate wounded dorsal view. Earlier underwater encounters follow the existing half-health and defeat rules.
+
+The ending recording includes a missed strobe attack and a successful strike. Supplementary input replays fire earlier to exercise the three farther strobe distances.
