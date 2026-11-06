@@ -72,6 +72,20 @@ rules.extend(('<condition>WestEdge,memoryCheckConstant,0339,==,FF',
               '<condition>NearWestEdge,memoryCheckConstant,0338,<,05'))
 for edge_guard in ('WestEdge','MapPageZero&NearWestEdge'):
  bg('MapA&MapB&'+edge_guard,'coast-west.png',11,1,1.0625)
+# The game clamps the camera to x=264 but only sends its low byte to
+# the PPU. At the eastern edge $FF -> $00 means 255 -> 256 in the chart.
+# With 21/256 extra scroll, PPU 244..255 receives a fixed +20 offset
+# and 0..8 receives zero. Their full 256-pixel viewports fit side by side.
+east = coast.crop((256*4, 0, 512*4, coast.height))
+edge = Image.new('RGB', (532*4, coast.height))
+edge.paste(east, (0, 0))
+edge.paste(east.crop((248*4, 0, 256*4, east.height)).transpose(Image.Transpose.FLIP_LEFT_RIGHT), (256*4, 0))
+edge.paste(coast.crop((244*4, 0, 512*4, coast.height)), (264*4, 0))
+artfile(edge, 'coast-east.png')
+rules.extend(('<condition>MapPageOne,memoryCheckConstant,0339,==,01',
+              '<condition>NearEastEdge,memoryCheckConstant,0338,>,F7'))
+for edge_guard in ('MapPageOne', 'MapPageZero&NearEastEdge'):
+ bg('MapA&MapB&'+edge_guard, 'coast-east.png', 11, 1, 1+21/256)
 # Surface water and the underwater plate share the original world waterline.
 full=Image.new('RGB',(1024,1920),'#052c39'); cap=asset('title-master').convert('RGB')
 sky=cap.crop((270,0,cap.width,468)).resize((1024,426),Image.Resampling.LANCZOS);full.paste(sky)
@@ -232,10 +246,9 @@ grid(fitted(boatobj,(128,96),(0,5,124,86)),[4,5,6,None,0x14,0x15,0x16,0x17,0x24,
 bonus_plane(custom,G,vector)
 shark_hit, wounded_jaws = sharks(custom,G)
 impact_bubbles(custom,vector)
-map_fins(custom,chrtiles,json.loads((project_dir/"data/fin-poses.json").read_text()))
+fin_layouts = json.loads((project_dir/'data/fin-poses.json').read_text())
+map_fins(custom, chrtiles, fin_layouts)
 ordnance(custom)
-star=vector(16,16,'<path d="M8 1.2L9.7 5.9 14.8 5.6 11 9.2 12.4 14.5 8 11.5 3.4 14.5 4.7 9.2 1 5.6 6.1 6Z" fill="#e59a48" stroke="#83451b" stroke-width=".6"/><path d="M8 2.2L8 8 2.2 6.25 8 9 4.1 13.4 8.3 9 12 13 9.3 8.4 13.3 6.25 8.5 7.6Z" fill="#f7c77b"/>')
-grid(star,[0xfc,0xfd,0xee,0xef],2)
 harpoon=vector(8,8,'<path d="M.4 3.5L5.5 3.5 5.5 2.25 7.9 4 5.5 5.45 5.5 4.5 .4 4.5Z" fill="#e1efce" stroke="#225163" stroke-width=".28"/>')
 custom[0x420]=harpoon
 # Conventional 4x treatment for remaining live effects and transitions; map
@@ -335,6 +348,16 @@ for t in [0x108,0x109,0x10a]:
    pa=rr['pa'];register(t,bytes([pa[0],*pa[j*4+1:j*4+4]]).hex().upper(),ix,'HudS&HudJ')
 from finale import build_finale
 build_finale(G, project_dir/'data/finale-poses.json', rom, chrtiles, artfile, rules, register, slot, font, vector)
+# Fill gaps in the recordings from the complete map-fin layouts. Append
+# these cells so that existing atlas slots keep their original coordinates.
+fin_palette = 'FF' + map_colors[25:28].hex().upper()  # NES sprite palette 2
+for layout in fin_layouts:
+ for tile, _, _ in layout:
+  index = 0x200 + tile
+  if ('MapA&MapB', index, fin_palette) not in mappings:
+   register(index, fin_palette, slot(custom[index]), 'MapA&MapB')
+from mini_sub import mini_sub
+mini_sub(G, vector, register, slot, rules)
 # Emit a single indexed tile atlas and a readable Mesen definition file.
 atlas=Image.new('RGBA',(512,((len(arena)+15)//16)*32))
 for i,im in enumerate(arena):atlas.paste(im,((i%16)*32,(i//16)*32))

@@ -11,7 +11,7 @@ A 4× graphics pack for the NES game *Jaws*, tested with MesenCE 2.2.1. It inclu
 
 ## Current build
 
-**v0.7.1.** Jaws breaches at four distances and towers above the bow on the closest pass. He emerges with clean skin. A successful thrust reveals a bloody puncture at the tip of the spike, and the wounds remain visible as he sinks.
+**v0.9.0.** Pick up the orange mini-sub on the overworld to pilot it underwater. Its painted cockpit and hull carry across both views. The propeller turns underwater, and the torpedoes follow the sub’s heading. This build also includes the recent fin, sea star, transceiver, boat wake and map fixes.
 
 The install ZIP includes the three jellyfish appearances used by the default mixed mode. The optional single-style configurations are available in the repository and source build.
 

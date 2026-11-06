@@ -71,7 +71,10 @@ def boat_heading(store, vector, overhead):
     idle_south = {}
     bare = Image.new("RGBA", (96, 96))
     bare.alpha_composite(overhead.resize((30, 72), LANCZOS), (33, 4))
-    south_still = bare.transpose(Image.Transpose.ROTATE_180)
+    south_still = Image.new("RGBA", bare.size)
+    # The southern stern has two OAM columns, while the northern one has
+    # three. Center its wake and hull together within the available cells.
+    south_still.alpha_composite(bare.transpose(Image.Transpose.ROTATE_180), (-2, 0))
     for phase in range(4):
         shift = (0, .42, -.35, .08)[phase]
         wake = "" if phase == 3 else f"""
@@ -83,7 +86,12 @@ def boat_heading(store, vector, overhead):
         # The 32px-wide center column is always present, even when the boat
         # stops and the game drops both outer wake cells.
         north.alpha_composite(overhead.resize((30,72), LANCZOS),(33,4))
-        south = north.transpose(Image.Transpose.ROTATE_180)
+        south = vector(24, 24, f'''<g fill="none" stroke-linecap="round">
+            <path d="M8.45 7Q8.35 5.1 {7.55+shift*.5} 2.5 M14.55 7Q14.65 5.1 {15.45-shift*.5} 2.5"
+                  stroke="#90cecf" stroke-width=".7"/>
+            <path d="M9.6 5.7Q11.5 {3.4+shift} 13.4 5.7 M10.55 2.4h1.9"
+                  stroke="#d1e5de" stroke-width=".48"/></g>''') if phase != 3 else Image.new("RGBA", bare.size)
+        south.alpha_composite(south_still)
         north_patterns = [
             [0x34,0x43,0x44,0x53,0x54,0x55],
             [0x04,0x13,0x14,0x23,0x24,0x25],
@@ -155,6 +163,21 @@ def collectible_cycles(store, crab, shell):
             dx = j * .9 * np.clip((y-33)/22,0,1)
             art = deform(pearl,dx,np.zeros_like(x)) if j else pearl
             register_tiles(store,art,[(lower,0,8),(lower+1,8,8)],0x400)
+
+
+def sea_star_cycle(store, assets):
+    with Image.open(assets / "sea-star.png") as image:
+        star = trim(image.convert("RGBA"))
+    # The game mirrors the angled and edge-on cells for the return half of
+    # the turn. The edge-on metasprite occupies a single column at x+3.
+    for width, canvas, center, tiles in (
+        (59, (64,64), (32,32), (0xdc,0xdd,0xec,0xed)),
+        (41, (64,64), (32,32), (0xfc,0xfd,0xee,0xef)),
+        (10, (32,64), (18,32), (0x9b,0xab)),
+    ):
+        body = place(star, canvas, (width,57), center)
+        body = subtle_outline(body, (77,43,30,135))
+        rectangle_tiles(store, body, tiles, columns=canvas[0]//32)
 
 
 def ray_cycle(store, ray):
@@ -241,6 +264,7 @@ def build(store, swimmer, shell, ray, vector, assets, output):
     idle_south = boat_heading(store,vector,overhead)
     idle_side = horizontal_boat(store,overhead,vector)
     collectible_cycles(store,crab,shell)
+    sea_star_cycle(store, assets)
     impact_layers = reaction_cycle(store,impacts)
     ray_cycle(store,ray)
     for i,(name,art) in enumerate(zip(STYLES,(moon,amber,blue))):

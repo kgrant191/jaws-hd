@@ -5,14 +5,22 @@ from sprite_motion import trim
 LANCZOS = Image.Resampling.LANCZOS
 
 
-def receiver_icon(vector):
-    return vector(16, 8, '''
-    <path d="M2 3L.7.6" fill="none" stroke="#d1d9d2" stroke-width=".55"/>
-    <rect x="1.2" y="2" width="14.2" height="5.7" rx="1" fill="#354d50" stroke="#8bafad" stroke-width=".35"/>
-    <rect x="2.3" y="3.1" width="5.2" height="2.5" rx=".3" fill="#d9bd82"/>
-    <path d="M3 4.6h3.6M5.4 3.5v1.6" fill="none" stroke="#805732" stroke-width=".35"/>
-    <path d="M9 3.4h4.1M9 4.3h4.1M9 5.2h4.1M9 6.1h4.1" fill="none" stroke="#111f25" stroke-width=".42"/>
-    <circle cx="3" cy="6.5" r=".45" fill="#d5a55e"/>''')
+def receiver_icon(vector, pulse):
+    # Move a single trace across the phosphor display with the NES signal.
+    # The receiver sits inside the two lower HUD tiles below the label strip.
+    points = []
+    for column in range(35):
+        relative = column - pulse
+        wave = {-3: -.3, -2: -.9, -1: -1.55, 0: -1.9,
+                1: 1.45, 2: .95, 3: .35}.get(relative, 0)
+        points.append(f"{2.35 + column * .235:.2f},{4.45 + wave:.2f}")
+    return vector(16, 8, f'''<path d="M2.2 2.7L.8.45" stroke="#d0dbcc" stroke-width=".55"/>
+    <rect x=".7" y="1.4" width="14.9" height="6.3" rx=".8" fill="#48585a" stroke="#a1b8b2" stroke-width=".34"/>
+    <rect x="1.7" y="2.05" width="9.4" height="4.6" rx=".5" fill="#102f31" stroke="#728d86" stroke-width=".32"/>
+    <path d="M4 2.5v3.6m2.3-3.6v3.6m2.3-3.6v3.6M2.2 4.45h8.4" fill="none" stroke="#37605b" stroke-width=".22"/>
+    <polyline points="{' '.join(points)}" fill="none" stroke="#a6f6c3" stroke-width=".45" stroke-linejoin="round"/>
+    <path d="M12.1 4h2.3m-2.3.9h2.3m-2.3.9h2.3" stroke="#192f33" stroke-width=".4"/>
+    <circle cx="13.25" cy="2.8" r=".48" fill="{'#ffbc6b' if pulse >= 0 else '#a08057'}"/>''')
 
 
 def build_harbor(assets, boat, vector, text, save, rules, register, slot):
@@ -81,9 +89,22 @@ def build_harbor(assets, boat, vector, text, save, rules, register, slot):
     save(banner,'port-power.png')
     rules.append(f'[{port}&MapMessageRow&PowerReply&PowerReplyWord]<background>port-power.png,1,0,0,32')
 
-    # The receiver indicator replaces the two original HUD icon tiles once
-    # acquired. Cover only the native glyphs so shell and power counts stay live.
-    icon = receiver_icon(vector)
-    for index, tile in enumerate((0x11b,0x11c)):
-        image = icon.crop((index*32,0,index*32+32,32))
-        register(tile,'0F201527',slot(image),'HudS&HudJ')
+    # The game leaves the lower pair in place and writes its oscilloscope
+    # waveform to the two tiles directly above it. Match the actual signal,
+    # including pauses between proximity pings and the unowned HUD state.
+    phases = (
+        (0x2f6f, 0x0d, 1), (0x2f6f, 0x1d, 5),
+        (0x2f6f, 0x0e, 10), (0x2f6f, 0x1e, 15),
+        (0x2f6f, 0x24, 20), (0x2f70, 0x27, 24),
+        (0x2f70, 0x28, 28), (0x2f70, 0x29, 33),
+    )
+    for phase, (address, code, pulse) in enumerate(phases):
+        condition = f'ReceiverPulse{phase}'
+        rules.append(f'<condition>{condition},ppuMemoryCheckConstant,{address:04X},==,{code:02X}')
+        icon = receiver_icon(vector, pulse)
+        for col, tile in enumerate((0x11b, 0x11c)):
+            index = slot(icon.crop((col*32, 0, col*32+32, 32)))
+            rules.append(f'[HudS&HudJ&{condition}]<tile>0,{tile:X},0F201527,{index%16*32},{index//16*32},1,N')
+    icon = receiver_icon(vector, -20)
+    for col, tile in enumerate((0x11b, 0x11c)):
+        register(tile, '0F201527', slot(icon.crop((col*32, 0, col*32+32, 32))), 'HudS&HudJ')
