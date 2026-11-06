@@ -1,4 +1,4 @@
-# Jaws HD v0.6.0
+# Jaws HD v0.7.0
 
 Editable source for the MesenCE 2.2.1 4× graphics pack.
 
@@ -45,3 +45,11 @@ The harbor banner follows the visible PPU text row. The queued text selects the 
 The navigation recording covers the receiver purchase, scrolling in both directions and two harbor upgrades. The incoming map column and its attribute byte can be updated on different frames. The four map palettes share transparent terrain replacements so the painted chart stays visible throughout the update. The receiver and harbor match the tiles actually displayed, including the first and last frames of each visit.
 
 Jaws starts at $1400 health. The hit routine subtracts damage from the little-endian value at $0388–$0389. The coarse HUD meter reads only $0389. The adult shark uses the wounded atlas when the full value is at or below $0A00. Both appearances use the same head and fin layout, three body poses, independent tail and native mirroring. A combat replay initialized just above half health crosses the threshold on an in-game hit. Additional boundary checks use $0A01, $0A00 and $09FF.
+
+## Final encounter in v0.7.0
+
+The game sets bit $20 in $0306 when the underwater encounter ends. It pulses the power meter between full and empty while the defeated actor is still on screen. This flag takes precedence over the normal half-health check for adult shark sprites. HUD counters use the original live digits with a smaller cap and extra headroom inside each 32-pixel HD cell.
+
+`finale.py` assembles the bow, advancing dorsal fin, breach and sinking shark from the measured placements in `data/finale-poses.json`. Each cell records the CHR tile index, X and Y in NES pixels, and original sprite attributes. The surface vista follows the PPU camera. The strobe number, bow movement, hit effect and flyby all follow native sprite changes. The first banked pass uses one painted aircraft anchored to the plane’s flight path so both wings stay continuous. The closing title appears when the game draws its title tiles.
+
+The 3,604-frame ending recording covers the last underwater hit, all six meter pulses, both strobe uses, the successful bow strike, the descent and the sunset flyby.

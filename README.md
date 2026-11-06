@@ -11,7 +11,7 @@ A 4× graphics pack for the NES game *Jaws*, tested with MesenCE 2.2.1. It inclu
 
 ## Current build
 
-**v0.6.0.** Jaws has a continuous head profile and shows wounds at or below half health. The coastal map stays painted as new columns scroll in. The receiver, harbor approach and power-up message use HD artwork.
+**v0.7.0.** The score, shell and power counters fit their HUD row. Jaws stays wounded through the defeat animation. The final encounter includes the strobe approach, bow strike, sinking shark and sunset flyby through the closing title.
 
 The install ZIP includes the three jellyfish appearances used by the default mixed mode. The optional single-style configurations are available in the repository and source build.
 

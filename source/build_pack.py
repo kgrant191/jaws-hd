@@ -258,12 +258,13 @@ for window, layer in zip(('HitEarly','HitMiddle'),impact_layers[:2]):
    rules.append(f'[DiveA&DiveB&{window}]<tile>0,{tile:X},{palette},{idx%16*32},{idx//16*32},1,N')
 # Jaws starts at $1400. The hit routine subtracts a 16-bit amount at
 # $0388-$0389. The HUD only displays the integer part of that quantity.
-rules.extend(('<condition>BelowHalf,memoryCheckConstant,0389,<,0A',
+rules.extend(('<condition>JawsDefeated,memoryCheckConstant,0306,==,20,20',
+              '<condition>BelowHalf,memoryCheckConstant,0389,<,0A',
               '<condition>HalfHigh,memoryCheckConstant,0389,==,0A',
               '<condition>HalfLow,memoryCheckConstant,0388,==,00'))
 for tile, image in wounded_jaws.items():
  index = slot(image)
- for hp_guard in ('BelowHalf', 'HalfHigh&HalfLow'):
+ for hp_guard in ('JawsDefeated', 'BelowHalf', 'HalfHigh&HalfLow'):
   rules.append(f'[DiveA&DiveB&{hp_guard}]<tile>0,{tile:X},FF200300,{index%16*32},{index//16*32},1,N')
 
 # The south-facing idle pose reuses upper pieces from its moving animation.
@@ -307,19 +308,33 @@ for t in range(0x130,0x13a):
  im.paste('#f6ead0',((32-mask.width)//2,2,(32+mask.width)//2,29),mask);idx=slot(im)
  for j in range(4):
   pa=R[360]['pa'];register(0x560+t-0x130,bytes([pa[0],*pa[4*j+1:4*j+4]]).hex().upper(),idx,'Ready&ReadyBoat')
+ # The lower HUD split can start a scanline early. Leave room above
+ # the full cap and below the baseline in the native 8x8 number slot.
+ hud_digit = Image.new('RGBA',(32,32))
+ ImageDraw.Draw(hud_digit).text((16,28),str(t-0x130),font=font(29,True),
+                               fill='#f6ead0',anchor='ms')
+ idx = slot(hud_digit)
  for rr in [R[n] for n in (360,600,1200,8160,8400,11520,4656)]:
   for j in range(4):
    pa=rr['pa'];register(t,bytes([pa[0],*pa[4*j+1:4*j+4]]).hex().upper(),idx,'HudS&HudJ')
 # Two live segments occupy each 8px bar tile. Preserve exact native cut-outs.
-for t in [0x108,0x109]:
- a=chrtiles[t];im=Image.new('RGBA',(32,32));dr=ImageDraw.Draw(im)
- for x0,x1 in [(0,14),(16,30)]:
-  if np.sum(a[:,x0//4:(x1+3)//4])>0:
-   dr.rounded_rectangle((x0,4,x1-1,25),radius=2,fill='#d79056',outline='#76523b');dr.line((x0+2,6,x1-3,6),fill='#f7bc7c')
+for t in [0x108,0x109,0x10a]:
+ im=Image.new('RGBA',(32,32));dr=ImageDraw.Draw(im)
+ for half in range(2):
+  x=half*16
+  # A filled segment uses three native columns; an empty one is a tick.
+  filled=np.count_nonzero(chrtiles[t,0,x//4:x//4+4])==3
+  if filled:
+   dr.rounded_rectangle((x,6,x+13,25),radius=2,fill='#d79056',outline='#76523b')
+   dr.line((x+2,8,x+11,8),fill='#f7bc7c')
+  else:
+   dr.rounded_rectangle((x+5,8,x+7,24),radius=1,fill='#526469')
  ix=slot(im)
  for rr in [R[n] for n in (360,600,1200,8160,8400,11520,4656)]:
   for j in range(4):
    pa=rr['pa'];register(t,bytes([pa[0],*pa[j*4+1:j*4+4]]).hex().upper(),ix,'HudS&HudJ')
+from finale import build_finale
+build_finale(G, project_dir/'data/finale-poses.json', chrtiles, artfile, rules, register, slot, font, vector)
 # Emit a single indexed tile atlas and a readable Mesen definition file.
 atlas=Image.new('RGBA',(512,((len(arena)+15)//16)*32))
 for i,im in enumerate(arena):atlas.paste(im,((i%16)*32,(i//16)*32))
