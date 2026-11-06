@@ -10282,6 +10282,7 @@
 [FinalSky&SunsetBluff&FirstFlyby&FlybyY89]<background>banked-flight.png,1,0,0,24,8,69
 <condition>FlybyY8A,memoryCheckConstant,0684,==,8A
 [FinalSky&SunsetBluff&FirstFlyby&FlybyY8A]<background>banked-flight.png,1,0,0,24,4,68
+<condition>SubPropTurn,frameRange,10,5
 [DiveA&DiveB]<tile>0,400,FF200300,64,224,1,N
 [DiveA&DiveB]<tile>0,401,FF200F27,96,224,1,N
 [DiveA&DiveB]<tile>0,402,FF200F27,128,224,1,N
@@ -10290,6 +10291,7 @@
 [DiveA&DiveB]<tile>0,405,FF0F2717,224,224,1,N
 [DiveA&DiveB]<tile>0,406,FF0F2717,256,224,1,N
 [DiveA&DiveB]<tile>0,407,FF200300,96,960,1,N
+[DiveA&DiveB]<tile>0,409,FF200F27,256,1728,1,N
 [DiveA&DiveB]<tile>0,40A,FF200F27,288,224,1,N
 [DiveA&DiveB]<tile>0,40B,FF200F27,320,224,1,N
 [DiveA&DiveB]<tile>0,40C,FF200F27,352,224,1,N
@@ -10304,6 +10306,7 @@
 [DiveA&DiveB]<tile>0,415,FF200F27,128,256,1,N
 [DiveA&DiveB]<tile>0,416,FF200F27,160,256,1,N
 [DiveA&DiveB]<tile>0,417,FF0F2717,192,256,1,N
+[DiveA&DiveB]<tile>0,419,FF0F2717,320,1728,1,N
 [DiveA&DiveB]<tile>0,41A,FF0F2717,224,256,1,N
 [DiveA&DiveB]<tile>0,41B,FF0F2717,256,256,1,N
 [DiveA&DiveB]<tile>0,41C,FF0F2717,288,256,1,N
@@ -10311,6 +10314,7 @@
 [DiveA&DiveB]<tile>0,41E,FF200300,352,256,1,N
 [DiveA&DiveB]<tile>0,41F,FF200300,384,256,1,N
 [DiveA&DiveB]<tile>0,420,FF201610,416,256,1,N
+[DiveA&DiveB]<tile>0,421,FF201610,416,1728,1,N
 [DiveA&DiveB]<tile>0,422,FF200F27,448,256,1,N
 [DiveA&DiveB]<tile>0,423,FF200F27,480,256,1,N
 [DiveA&DiveB]<tile>0,424,FF201610,0,288,1,N
@@ -10664,6 +10668,10 @@
 [DiveA&DiveB]<tile>0,5FF,0F120C21,0,0,1,N
 [DiveA&DiveB]<tile>0,5FF,0F201627,0,0,1,N
 [DiveA&DiveB]<tile>0,5FF,0F202112,0,0,1,N
+[DiveA&DiveB&!SubPropTurn]<tile>0,408,FF200F27,224,1728,1,N
+[DiveA&DiveB&!SubPropTurn]<tile>0,418,FF0F2717,288,1728,1,N
+[DiveA&DiveB&SubPropTurn]<tile>0,408,FF200F27,352,1728,1,N
+[DiveA&DiveB&SubPropTurn]<tile>0,418,FF0F2717,384,1728,1,N
 [FinalSky&FinalSeaPalette]<tile>0,601,FF20170F,480,992,1,N
 [FinalSky&FinalSeaPalette]<tile>0,602,FF20170F,32,1024,1,N
 [FinalSky&FinalSeaPalette]<tile>0,602,FF20260F,0,1024,1,N
@@ -11298,6 +11306,12 @@
 [MapA&MapB]<tile>0,25B,FF200F27,128,800,1,N
 [MapA&MapB]<tile>0,25C,FF201610,160,800,1,N
 [MapA&MapB]<tile>0,25D,FF200F27,192,800,1,N
+[MapA&MapB]<tile>0,260,FF200F27,32,1728,1,N
+[MapA&MapB]<tile>0,261,FF200F27,64,1728,1,N
+[MapA&MapB]<tile>0,262,FF200F27,96,1728,1,N
+[MapA&MapB]<tile>0,270,FF0F2717,128,1728,1,N
+[MapA&MapB]<tile>0,271,FF0F2717,160,1728,1,N
+[MapA&MapB]<tile>0,272,FF0F2717,192,1728,1,N
 [MapA&MapB]<tile>0,280,FF200300,224,800,1,N
 [MapA&MapB]<tile>0,281,FF200300,256,800,1,N
 [MapA&MapB]<tile>0,282,FF200300,288,800,1,N
@@ -12752,6 +12766,7 @@
 [ShallowA&ShallowB]<tile>0,405,FF0F2717,224,224,1,N
 [ShallowA&ShallowB]<tile>0,406,FF0F2717,256,224,1,N
 [ShallowA&ShallowB]<tile>0,407,FF200300,96,960,1,N
+[ShallowA&ShallowB]<tile>0,409,FF200F27,256,1728,1,N
 [ShallowA&ShallowB]<tile>0,40A,FF200F27,288,224,1,N
 [ShallowA&ShallowB]<tile>0,40B,FF200F27,320,224,1,N
 [ShallowA&ShallowB]<tile>0,40C,FF200F27,352,224,1,N
@@ -12766,6 +12781,7 @@
 [ShallowA&ShallowB]<tile>0,415,FF200F27,128,256,1,N
 [ShallowA&ShallowB]<tile>0,416,FF200F27,160,256,1,N
 [ShallowA&ShallowB]<tile>0,417,FF0F2717,192,256,1,N
+[ShallowA&ShallowB]<tile>0,419,FF0F2717,320,1728,1,N
 [ShallowA&ShallowB]<tile>0,41A,FF0F2717,224,256,1,N
 [ShallowA&ShallowB]<tile>0,41B,FF0F2717,256,256,1,N
 [ShallowA&ShallowB]<tile>0,41C,FF0F2717,288,256,1,N
@@ -12773,6 +12789,7 @@
 [ShallowA&ShallowB]<tile>0,41E,FF200300,352,256,1,N
 [ShallowA&ShallowB]<tile>0,41F,FF200300,384,256,1,N
 [ShallowA&ShallowB]<tile>0,420,FF201610,416,256,1,N
+[ShallowA&ShallowB]<tile>0,421,FF201610,416,1728,1,N
 [ShallowA&ShallowB]<tile>0,422,FF200F27,448,256,1,N
 [ShallowA&ShallowB]<tile>0,423,FF200F27,480,256,1,N
 [ShallowA&ShallowB]<tile>0,424,FF201610,0,288,1,N
@@ -12970,6 +12987,10 @@
 [ShallowA&ShallowB]<tile>0,4FB,FF0F2717,0,672,1,N
 [ShallowA&ShallowB]<tile>0,4FC,FF0F2717,32,672,1,N
 [ShallowA&ShallowB]<tile>0,4FD,FF0F2717,64,672,1,N
+[ShallowA&ShallowB&!SubPropTurn]<tile>0,408,FF200F27,224,1728,1,N
+[ShallowA&ShallowB&!SubPropTurn]<tile>0,418,FF0F2717,288,1728,1,N
+[ShallowA&ShallowB&SubPropTurn]<tile>0,408,FF200F27,352,1728,1,N
+[ShallowA&ShallowB&SubPropTurn]<tile>0,418,FF0F2717,384,1728,1,N
 <patch>jelly-appearance.ips,c102da80b2ded9364ebd707df14cbc3bd40bd65a
 [DiveA&DiveB]<tile>1,42A,FF201610,0,0,1,N
 [DiveA&DiveB]<tile>1,42B,FF201610,32,0,1,N

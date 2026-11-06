@@ -1,4 +1,4 @@
-# Jaws HD v0.8.1
+# Jaws HD v0.9.0
 
 Editable source for the MesenCE 2.2.1 4× graphics pack.
 
@@ -72,3 +72,9 @@ The transceiver uses the original idle oscilloscope line and eight pulse positio
 ## Overworld fin in v0.8.1
 
 The supported ROM stores 34 map-fin poses at $B34D–$B56A. The HD layouts cover all 104 distinct cells, including shared tiles and the partial surfacing or diving poses. Each layout supplies both the painting and its map-sprite registration. The game controls timing, heading and mirroring.
+
+## Mini-submarine in v0.9.0
+
+The map pickup uses six cells ($260–$262 and $270–$272). The piloted sub uses four ($408–$409 and $418–$419), with a different sprite palette for each row. The side view is painted facing right in the unflipped layout so that the native horizontal flip turns the canopy and propeller together. Only the stern cells alternate for the propeller. The sub’s torpedo uses $421 and the boat’s existing depth charge uses $423. Both diving depths receive the underwater replacements.
+
+The 1,645-frame recording covers the pickup at the chart edge, the first launch, both facings, firing, and the return to the diver after the sub is hit.

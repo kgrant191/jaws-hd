@@ -356,6 +356,8 @@ for layout in fin_layouts:
   index = 0x200 + tile
   if ('MapA&MapB', index, fin_palette) not in mappings:
    register(index, fin_palette, slot(custom[index]), 'MapA&MapB')
+from mini_sub import mini_sub
+mini_sub(G, vector, register, slot, rules)
 # Emit a single indexed tile atlas and a readable Mesen definition file.
 atlas=Image.new('RGBA',(512,((len(arena)+15)//16)*32))
 for i,im in enumerate(arena):atlas.paste(im,((i%16)*32,(i//16)*32))
