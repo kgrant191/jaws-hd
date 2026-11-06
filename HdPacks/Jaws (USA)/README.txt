@@ -1,4 +1,4 @@
-Jaws HD v0.9.0
+Jaws HD v1.0.0
 4× NES graphics pack for MesenCE 2.2.1
 
 INSTALL

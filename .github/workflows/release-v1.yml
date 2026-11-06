@@ -1,0 +1,63 @@
+name: Publish Jaws HD v1.0.0
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/release-v1.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jaws-hd-release-v1
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Package the runtime files and gallery
+        run: python3 source/package_release.py --output "$RUNNER_TEMP/jaws-release"
+      - name: Publish the verified assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag=v1.0.0
+          if draft=$(gh release view "$tag" --json isDraft --jq .isDraft); then
+            if [[ "$draft" == false ]]; then
+              echo "The release is already published."
+              exit 0
+            fi
+            test "$(gh release view "$tag" --json targetCommitish --jq .targetCommitish)" = "$GITHUB_SHA"
+          else
+            cat > "$RUNNER_TEMP/jaws-notes.md" <<'NOTES'
+          The first full release of Jaws HD, a 4× graphics pack for the original NES game tested with MesenCE 2.2.1.
+
+          - Explore the painted coastal map and harbors, track Jaws with the animated receiver, and pilot the mini-sub.
+          - Dive among animated sharks, rays and jellyfish. Jaws shows wounds at half health and after the final bow strike.
+          - The bonus flight, final breach and ending have HD artwork.
+
+          **To play:** Download **Jaws_HD_v1.0.0.zip**, close the game, and extract its **Jaws (USA)** folder into MesenCE's **HdPacks** directory. Enable NES HD packs and open your own USA ROM. If your ROM has another filename, rename the pack folder to match it without the extension.
+
+          **Jaws_HD_v1.0.0_Comparisons.zip** contains the four original-versus-HD screenshots in the README.
+          NOTES
+            gh release create "$tag" --target "$GITHUB_SHA" --draft --title 'Jaws HD v1.0.0' --notes-file "$RUNNER_TEMP/jaws-notes.md"
+          fi
+          cd "$RUNNER_TEMP/jaws-release"
+          gh release upload "$tag" Jaws_HD_v1.0.0.zip Jaws_HD_v1.0.0_Comparisons.zip --clobber
+          for asset in *.zip; do
+            hash=$(sha256sum "$asset" | cut -d' ' -f1)
+            remote=$(gh release view "$tag" --json assets --jq ".assets[] | select(.name == \"$asset\") | .digest")
+            test "$remote" = "sha256:$hash"
+          done
+          gh release edit "$tag" --draft=false --latest
