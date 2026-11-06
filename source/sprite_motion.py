@@ -104,6 +104,35 @@ def boat_heading(store, vector, overhead):
     return idle_south
 
 
+def horizontal_boat(store, overhead, vector):
+    # Keep the same deck and cabin when turning through ninety degrees. The
+    # original shifts the entire sprite by one NES pixel to make it bob.
+    still = Image.new('RGBA',(96,96))
+    hull = overhead.resize((30,72),LANCZOS).transpose(Image.Transpose.ROTATE_270)
+    still.alpha_composite(hull,(15,45))
+    upper = [(0,0,0),(1,8,0),(0x10,0,8),(0x11,8,8),(0x12,16,8)]
+    # The middle bottom cell of the last moving pose is $02, not $31.
+    rows = [(0x50,0x21,0x22),(0x30,0x31,0x32),(0x40,0x41,0x52),
+            (0x20,0x51,0x52),(0x30,0x02,0x42)]
+    idle = {}
+    for phase,bottom in enumerate(rows):
+        sway = (0,.30,-.2,.20,-.30)[phase]
+        wake = vector(24,24, f'''<g fill="none" stroke-linecap="round">
+          <path d="M4.5 12.9 Q2.6 12.9 .65 11.65 M4.6 16.6 Q2.7 17.1 .8 {18.05+sway}"
+             stroke="#9acdc9" stroke-width=".52"/>
+          <path d="M3.5 14.3 Q2.4 14.7 1.6 14.3 M2.6 16.3l-.9 .4"
+             stroke="#c9ded5" stroke-width=".36"/></g>''')
+        wake.alpha_composite(still)
+        lower = [(t,x*8,16) for x,t in enumerate(bottom)]
+        register_tiles(store,wake,lower,0x200)
+        register_tiles(idle,still,lower,0x200)
+    # Upper/middle pieces are shared by all wave phases. Only the lower
+    # wake tips vary. Every shared cell has the same painted hull.
+    register_tiles(store,wake,upper,0x200)
+    register_tiles(idle,still,upper,0x200)
+    return idle
+
+
 def collectible_cycles(store, crab, shell):
     y,x = np.indices((64,64), dtype=float)
     crab_body = place(crab, (64,64), (59,46), (32,35))
@@ -207,7 +236,10 @@ def build(store, swimmer, shell, ray, vector, assets, output):
         w,h=f.size
     impacts=plate(assets/'diver-reactions.png',[(0,0,w//2,h),(w//2,0,w,h)])
     swim_cycle(store,swimmer)
-    idle_south = boat_heading(store,vector,trim(Image.open(assets/"map-boat.png").convert("RGBA")))
+    with Image.open(assets/"map-boat.png") as original:
+        overhead = trim(original.convert("RGBA"))
+    idle_south = boat_heading(store,vector,overhead)
+    idle_side = horizontal_boat(store,overhead,vector)
     collectible_cycles(store,crab,shell)
     impact_layers = reaction_cycle(store,impacts)
     ray_cycle(store,ray)
@@ -218,7 +250,7 @@ def build(store, swimmer, shell, ray, vector, assets, output):
         atlas.save(dest/'jellyfish.png')
         if i==0:
             atlas.save(output/'jellyfish.png')
-    return impact_layers, idle_south
+    return impact_layers, idle_south, idle_side
 
 
 def jelly_position(tile):

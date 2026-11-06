@@ -1,20 +1,15 @@
-Jaws HD v0.5.1
-MesenCE 2.2.1 • 4× NES graphics pack
+Jaws HD v0.5.2
+4× NES graphics pack for MesenCE 2.2.1
 
 INSTALL
-Close the ROM. Extract the Jaws (USA) folder into Mesen's HdPacks folder, replacing the entire previous Jaws HD folder. The active file should be HdPacks/Jaws (USA)/hires.txt. If your ROM has another filename, give the folder the same name without the .nes extension. Enable NES HD packs and reopen the game.
+Close the ROM. Extract Jaws (USA) into MesenCE's HdPacks folder and replace the previous Jaws HD folder. The active file should be HdPacks/Jaws (USA)/hires.txt. If your ROM uses a different filename, rename the pack folder to the ROM name without .nes. Enable NES HD packs and reopen the game.
 
-THIS BUILD
-The baby shark keeps its painted nose, fins and body during the brief hit flashes before it drops a shell. A three-step underwater bubble effect follows the hit. The bonus-stage spotter plane has a new side-profile airframe and a complete propeller animation in either direction. Dropped charges have a small illustrated canopy before they enter the water.
+IN THIS BUILD
+The map boat keeps the same overhead hull and cabin in all four directions. Moving and idle sprites use separate wakes. The western edge scrolls continuously past zero, and the conch-shell message at port has its own HD banner. The next encounter displays its own message when the game opens the text strip.
 
 JELLYFISH
-Mixed is the default. Moon Jelly, Amber Sea Nettle and Electric Blue each receive one third of the choices. Consecutive spawns can repeat. Each jellyfish keeps its assigned style through the pulse animation and movement. The first spawn seeds the cosmetic sequence from the game state. Identical replay inputs and starting state reproduce the same mix.
+Mixed mode gives Moon Jelly, Amber Sea Nettle and Electric Blue an equal share of the choices. A jellyfish keeps its appearance throughout its animation. To force one style, copy its hires.txt from Jellyfish Options into the pack root and reopen the ROM. Copy Jellyfish Options/Mixed/hires.txt back to restore variation.
 
-To force one appearance, copy the hires.txt inside its Jellyfish Options subfolder into the pack root, replacing the active hires.txt, then reopen the ROM. Restore Jellyfish Options/Mixed/hires.txt to switch back. Existing untagged jellyfish in an older save use Moon until the next spawn.
-
-The small bundled appearance IPS is automatically applied in memory in mixed mode. Install the graphics pack against the original USA ROM with SHA-1 C102DA80B2DED9364EBD707DF14CBC3BD40BD65A. No manual patching is needed.
-
-TEST COVERAGE
-Tested in MesenCE 2.2.1 with the 4,279-frame recording that starts alongside the baby shark and ends after the bonus round. Compared both hit flashes, the shell drop, and both propeller frames on flights in each direction against v0.5.0.
+Use the original Jaws (USA) ROM with SHA-1 C102DA80B2DED9364EBD707DF14CBC3BD40BD65A. MesenCE applies the bundled appearance patch in memory when using mixed mode.
 
 Unofficial fan graphics pack. Jaws and the original game belong to their respective rights holders.

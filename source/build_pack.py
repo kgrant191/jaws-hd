@@ -56,13 +56,21 @@ marker('Results',51,67,0x142);marker('ResultsWord',131,67,0x145)
 # Bright lands, navigable water and the harbor stay registered to the map camera.
 m=Image.new('RGB',(1024,1920),'#08171c'); m.paste(asset('coast').convert('RGB').resize((1024,1536),Image.Resampling.LANCZOS),(0,128));coastline(G,m,artfile)
 bg('MapA&MapB','coast.png',10,1,1)
-# At the western stop the ROM writes $F8 into the horizontal PPU scroll.
-# The custom layer sees +248 while the game's signed camera is -8.
-westedge=Image.new('RGB',(2048,1920),'#08171c')
-westedge.paste(m,(1024,0))
+# At the western stop the NES scroll register wraps from $FF to $00,
+# sometimes a frame after the signed CPU position changes. Give both visible
+# windows their own space on one texture and use it on either side of zero.
+# Mesen takes floor(scrollX * 17/16) before applying the 4x pack scale.
+# That adds 15 pixels for $F8..$FF and zero for $00..$07.
+coast = Image.open(P/'coast.png').convert('RGB')
+westedge = Image.new('RGB', (527*4,1920), '#08171c')
+westedge.paste(coast.crop((0,0,263*4,1920)),(0,0))
+westedge.paste(coast.crop((0,0,256*4,1920)),(271*4,0))
 artfile(westedge,'coast-west.png')
-rules.append('<condition>WestEdge,memoryCheckConstant,0339,==,FF')
-bg('MapA&MapB&WestEdge','coast-west.png',11,1,1)
+rules.extend(('<condition>WestEdge,memoryCheckConstant,0339,==,FF',
+              '<condition>MapPageZero,memoryCheckConstant,0339,==,00',
+              '<condition>NearWestEdge,memoryCheckConstant,0338,<,05'))
+for edge_guard in ('WestEdge','MapPageZero&NearWestEdge'):
+ bg('MapA&MapB&'+edge_guard,'coast-west.png',11,1,1.0625)
 # Surface water and the underwater plate share the original world waterline.
 full=Image.new('RGB',(1024,1920),'#052c39'); cap=asset('title-master').convert('RGB')
 sky=cap.crop((270,0,cap.width,468)).resize((1024,426),Image.Resampling.LANCZOS);full.paste(sky)
@@ -143,17 +151,38 @@ for variant,gate in [('plain',''),('power','&PowerHud'),('hits','&HitsHud')]:
 bg('HudS&HudJ','hud-plain.png',21);bg('HudS&HudJ&PowerHud','hud-power.png',22);bg('HudS&HudJ&HitsHud','hud-hits.png',22)
 # The map changes scroll origin just above its HUD during encounter messages.
 # A banner covers the split only when the matching native message is visible.
+marker('MapMessageRow',11,194,0x120)
 cond('ContactY',0x2f26,0x59);cond('ContactS',0x2f31,0x53)
 notice=Image.new('RGBA',size);nd=ImageDraw.Draw(notice)
 nd.rectangle((0,736,1023,800),fill='#102831');nd.line((0,737,1023,737),fill='#d29d60',width=2)
 text(notice,(512,780),'YOU’VE HIT SOMETHING!',28,'#ffe5ac','ms',True)
-artfile(notice,'contact.png');bg('ContactY&ContactS&HudS&HudJ','contact.png',25)
+artfile(notice,'contact.png');bg('ContactY&ContactS&MapMessageRow&HudS&HudJ','contact.png',25)
 cond('ContactJ',0x2f33,0x4A);cond('ContactW',0x2f35,0x57)
 jaws_notice=Image.new('RGBA',size)
 jaws_notice.paste(notice.crop((0,736,1024,743)),(0,736))
 ImageDraw.Draw(jaws_notice).rectangle((0,743,1023,800),fill='#102831')
 text(jaws_notice,(512,780),'YOU’VE HIT JAWS!',28,'#ffe5ac','ms',True)
-artfile(jaws_notice,'contact-jaws.png');bg('ContactJ&ContactW&HudS&HudJ','contact-jaws.png',25)
+artfile(jaws_notice,'contact-jaws.png');bg('ContactJ&ContactW&MapMessageRow&HudS&HudJ','contact-jaws.png',25)
+# The port message remains in nametable RAM after the game closes it.
+# Match the Y and C that the PPU actually drew in the message strip.
+marker('PortY',27,194,0x159)
+marker('PortC',139,194,0x143)
+port_notice = jaws_notice.copy()
+ImageDraw.Draw(port_notice).rectangle((0,743,1023,800),fill='#102831')
+text(port_notice,(512,780),'YOU NEED MORE CONCH SHELLS.',28,'#ffe5ac','ms',True)
+artfile(port_notice,'port-shells.png')
+bg('MapA&MapB&PortY&PortC','port-shells.png',25)
+# The first split scanline can show an empty or stale nametable before the
+# queued text is copied. At that point the upload buffer already holds the
+# next message. Select it only while the PPU is displaying the dialogue row.
+rules.append('<condition>MessageUpload,memoryCheckConstant,0102,==,AB')
+for name,filename,first,last in (
+    ('Shell','port-shells.png',(0x0108,'Y'),(0x0116,'C')),
+    ('Jaws','contact-jaws.png',(0x0118,'J'),(0x011A,'W')),
+    ('Encounter','contact.png',(0x010B,'Y'),(0x0116,'S'))):
+ for suffix,(address,char) in (('First',first),('Word',last)):
+  rules.append(f'<condition>{name}{suffix},memoryCheckConstant,{address:04X},==,{ord(char):02X}')
+ bg(f'MapA&MapB&MapMessageRow&MessageUpload&{name}First&{name}Word',filename,26)
 # Artwork and labels sit around native counters.
 offwhite='#f5ecda';teal='#abcac5'
 ready=Image.new('RGBA',(1024,800),'#08161a');boat=asset('boat').convert('RGB').resize((1024,500),Image.Resampling.LANCZOS)
@@ -210,9 +239,6 @@ star=vector(16,16,'<path d="M8 1.2L9.7 5.9 14.8 5.6 11 9.2 12.4 14.5 8 11.5 3.4 
 grid(star,[0xfc,0xfd,0xee,0xef],2)
 harpoon=vector(8,8,'<path d="M.4 3.5L5.5 3.5 5.5 2.25 7.9 4 5.5 5.45 5.5 4.5 .4 4.5Z" fill="#e1efce" stroke="#225163" stroke-width=".28"/>')
 custom[0x420]=harpoon
-side=fitted(boatobj,(96,96),(0,6,95,80))
-for t,x,y in [(0,0,0),(1,8,0),(0x10,0,8),(0x11,8,8),(0x12,16,8)]+[(row+j,j*8,16) for row in (0x20,0x30,0x40,0x50) for j in range(3)]:
- assign(side,[(t,x,y)],0x200)
 # Conventional 4x treatment for remaining live effects and transitions; map
 # the exact observed tile/palette identities instead of a palette-wide fallback.
 nes={0x0f:'#102832',0x00:'#a0b1ae',0x10:'#9bafbc',0x20:'#f2e6ca',0x06:'#8a4936',0x03:'#395c73',0x27:'#e6bb68',0x17:'#995c35',0x16:'#b64f3e',0x25:'#c59cbe',0x12:'#355b88'}
@@ -221,7 +247,7 @@ def basic(t,p):
  arr=np.array([tuple(bytes.fromhex(c[1:]))+(0 if i==0 else 255,) for i,c in enumerate(col)],np.uint8)
  return Image.fromarray(arr[chrtiles[t]],'RGBA').resize((32,32),Image.Resampling.LANCZOS)
 from sprite_motion import build as build_motion, jelly_position
-impact_layers, idle_south = build_motion(custom, diver, shell, ray, vector, G, P)
+impact_layers, idle_south, idle_side = build_motion(custom, diver, shell, ray, vector, G, P)
 rules.extend(['<condition>HitEarly,memoryCheckConstant,0695,>,14',
               '<condition>HitMiddle,memoryCheckConstant,0695,>,09'])
 # Mesen selects the first matching rule. Test the early threshold before
@@ -234,11 +260,21 @@ for window, layer in zip(('HitEarly','HitMiddle'),impact_layers[:2]):
 # The south-facing idle pose reuses upper pieces from its moving animation.
 # Resolve these tiles using the boat's own stopped-pose pointer.
 rules.append('<condition>SouthIdleLo,memoryCheckConstant,0688,==,78')
-rules.append('<condition>SouthIdleHi,memoryCheckConstant,0689,==,AE')
+rules.append('<condition>MapBoatAnimPage,memoryCheckConstant,0689,==,AE')
 for tile, image in idle_south.items():
     index = slot(image)
     for palette in observed.get(('MapA&MapB', tile), []):
-        rules.append(f'[MapA&MapB&SouthIdleLo&SouthIdleHi]<tile>0,{tile:X},{palette},{index%16*32},{index//16*32},1,N')
+        rules.append(f'[MapA&MapB&SouthIdleLo&MapBoatAnimPage]<tile>0,{tile:X},{palette},{index%16*32},{index//16*32},1,N')
+
+# Both headings share the same horizontal metasprite; Mesen mirrors the cells.
+# Port dialogs freeze the last moving pose, including its wake cells.
+rules.append('<condition>SideIdleLo,memoryCheckConstant,0688,==,72')
+rules.append('<condition>MapDialog,memoryCheckConstant,0305,>,7F')
+for tile, image in idle_side.items():
+    index = slot(image)
+    for palette in observed.get(('MapA&MapB',tile),[]):
+        for state in ('SideIdleLo&MapBoatAnimPage','MapDialog'):
+            rules.append(f'[MapA&MapB&{state}]<tile>0,{tile:X},{palette},{index%16*32},{index//16*32},1,N')
 
 jelly_rules = []
 for (scope,t),pals in observed.items():

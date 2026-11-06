@@ -11,7 +11,7 @@ A 4× graphics pack for the NES game *Jaws*, tested with MesenCE 2.2.1. It inclu
 
 ## Current build
 
-**v0.5.1.** The baby shark has its own hit pose. The bonus aircraft uses both propeller frames and drops illustrated parachute charges.
+**v0.5.2.** The overhead boat keeps its hull through turns and stops. The western map scrolls continuously, and the harbor shell message and Jaws encounter each display in their own HD banner.
 
 Mixed jellyfish are enabled by default. Moon Jelly, Amber Sea Nettle and Electric Blue each have an equal chance of selection. Single-style options and switching instructions are in the pack folder.
 
