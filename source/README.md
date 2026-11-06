@@ -1,4 +1,4 @@
-# Jaws HD v0.7.0
+# Jaws HD v0.7.1
 
 Editable source for the MesenCE 2.2.1 4× graphics pack.
 
@@ -50,6 +50,15 @@ Jaws starts at $1400 health. The hit routine subtracts damage from the little-en
 
 The game sets bit $20 in $0306 when the underwater encounter ends. It pulses the power meter between full and empty while the defeated actor is still on screen. This flag takes precedence over the normal half-health check for adult shark sprites. HUD counters use the original live digits with a smaller cap and extra headroom inside each 32-pixel HD cell.
 
-`finale.py` assembles the bow, advancing dorsal fin, breach and sinking shark from the measured placements in `data/finale-poses.json`. Each cell records the CHR tile index, X and Y in NES pixels, and original sprite attributes. The surface vista follows the PPU camera. The strobe number, bow movement, hit effect and flyby all follow native sprite changes. The first banked pass uses one painted aircraft anchored to the plane’s flight path so both wings stay continuous. The closing title appears when the game draws its title tiles.
+`finale.py` uses the bow, fin, sinking and flyby sprite registrations in `data/finale-poses.json`. Each cell records the CHR tile index, X and Y in NES pixels, and original sprite attributes. The surface vista follows the PPU camera. The strobe number, bow movement, hit effect and flyby all follow native sprite changes. The first banked pass uses one painted aircraft anchored to the plane’s flight path so both wings stay continuous. The closing title appears when the game draws its title tiles.
 
 The 3,604-frame ending recording covers the last underwater hit, all six meter pulses, both strobe uses, the successful bow strike, the descent and the sunset flyby.
+
+
+## Final strike in v0.7.1
+
+`strike.py` reads the four strobe animation sequences from the supported ROM. The scene compositor follows Jaws’s signed X coordinate, waterline, current pose and facing direction. The closest full breach is 280 × 400 HD pixels. The visible body rises out of a separate line of foam on the early frames.
+
+The game accepts the fatal thrust while Jaws is in the eight-by-eight contact window. The finishing artwork uses both the native success flag and the rendered impact tile at the bow tip. It stays aligned to the spike in either facing direction. The underwater descent uses a separate wounded dorsal view. Earlier underwater encounters follow the existing half-health and defeat rules.
+
+The ending recording includes a missed strobe attack and a successful strike. Supplementary input replays fire earlier to exercise the three farther strobe distances.

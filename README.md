@@ -11,7 +11,7 @@ A 4× graphics pack for the NES game *Jaws*, tested with MesenCE 2.2.1. It inclu
 
 ## Current build
 
-**v0.7.0.** The score, shell and power counters fit their HUD row. Jaws stays wounded through the defeat animation. The final encounter includes the strobe approach, bow strike, sinking shark and sunset flyby through the closing title.
+**v0.7.1.** Jaws breaches at four distances and towers above the bow on the closest pass. He emerges with clean skin. A successful thrust reveals a bloody puncture at the tip of the spike, and the wounds remain visible as he sinks.
 
 The install ZIP includes the three jellyfish appearances used by the default mixed mode. The optional single-style configurations are available in the repository and source build.
 

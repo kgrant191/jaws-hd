@@ -7,9 +7,10 @@ from PIL import Image, ImageDraw, ImageFilter
 from scipy.ndimage import map_coordinates
 
 from sprite_motion import trim
+from strike import build_strike, build_descent
 
 LANCZOS = Image.Resampling.LANCZOS
-BATTLE = 'FinalSky&StrobeStrip'
+BATTLE = 'FinalSky&FinalSeaPalette'
 FLIGHT = 'FinalSky&SunsetBluff'
 SINK = 'FinishHit&DiveA&DiveB&!HudS&SinkWater'
 BATTLE_COLORS = ('FF20170F','FF200F00','FF20260F','FF16260F')
@@ -116,26 +117,6 @@ def paint_fin(cells, dorsal, vector):
     return canvas
 
 
-def paint_breaches(master, poses, output):
-    # The game raises the animal one row at a time. The first four poses
-    # reuse the top of the first full pose at different screen positions.
-    for phase,cells in enumerate(poses):
-        width=max(x for _,x,_,_ in cells)+8
-        height=max(y for _,_,y,_ in cells)+8
-        canvas=Image.new('RGBA',(4*width,4*height))
-        positions={t:(x,y) for t,x,y,_ in cells}
-        anchor=next((positions[t][0] for t in (0x55,0x58,0x5b) if t in positions),0)
-        # Roll slightly from the open-mouth breach to the struck pose.
-        sprite=master.rotate((0,3,-4)[max(0,phase-4)],Image.Resampling.BICUBIC,expand=True)
-        sprite=trim(sprite).resize((88,156),LANCZOS)
-        canvas.alpha_composite(sprite,(anchor*4+1,2))
-        if height<40:
-            foam=master.crop((0,int(master.height*.946),master.width,master.height))
-            foam=foam.resize((min(width*4-2,100),min(13,height*2)),LANCZOS)
-            canvas.alpha_composite(foam,((canvas.width-foam.width)//2,canvas.height-foam.height))
-        add_tiles(output,canvas,cells,0x600,BATTLE_COLORS)
-
-
 def flight_art(master, cells, angle, patterns):
     # Scale the banked aircraft to its native wing span, then align its
     # silhouette with the original footprint. This preserves moving wingtips
@@ -182,13 +163,14 @@ def sparkle(cells, patterns):
     return glow
 
 
-def build_finale(assets, poses_file, patterns, save, rules, register, slot, font, vector):
+def build_finale(assets, poses_file, rom, patterns, save, rules, register, slot, font, vector):
     poses=json.loads(poses_file.read_text())
     def art(name):
         with Image.open(assets/'finale'/(name+'.png')) as source:
             return source.copy()
     rules.extend((
         '<condition>FinalSky,tileAtPosition,19,3,702,00000000,Y',
+        '<condition>FinalSeaPalette,ppuMemoryCheckConstant,3F05,==,00',
         '<condition>StrobeStrip,tileAtPosition,19,233,700,00000000,Y',
         '<condition>SunsetBluff,tileAtPosition,19,233,73C,00000000,Y',
         '<condition>EndCaption,tileAtPosition,179,211,7E8,00000000,Y',
@@ -214,15 +196,20 @@ def build_finale(assets, poses_file, patterns, save, rules, register, slot, font
         deck=Image.new('RGBA',(256,224))
         deck.alpha_composite(bow,(10,0))
         if phase:
-            pen=ImageDraw.Draw(deck)
-            pen.polygon([(125,2),(129,0),(132,31),(129,47),(125,27)],fill='#92382e')
-            pen.line((128,3,129,28),fill='#e2a08b',width=2)
+            # Stain the existing tapered steel; its antialiased outline
+            # disappears into the puncture on the two impact-only tip rows.
+            pixels=np.array(deck)
+            depth=np.arange(64)[:,None,None]
+            tint=.78*np.clip(1-depth/64,0,1)
+            pixels[:64,:,:3]=np.rint(pixels[:64,:,:3]*(1-tint)+np.array([91,19,20])*tint)
+            pixels[:64,:,3]=np.rint(pixels[:64,:,3]*np.clip((depth[:,:,0]-2)/7,0,1))
+            deck=Image.fromarray(pixels)
         add_tiles(surface,deck,cells,0x600,BATTLE_COLORS)
     with Image.open(assets/'sharks.png') as source:
         dorsal=trim(source.convert('RGBA').crop((650,419,980,560)))
     for cells in poses['fin']:
         add_tiles(surface,paint_fin(cells,dorsal,vector),cells,0x600,BATTLE_COLORS)
-    paint_breaches(trim(art('breach-shark').convert('RGBA')),poses['breach'],surface)
+    build_strike(art,rom,rules,save,BATTLE,surface,BATTLE_COLORS[1])
 
     # The STROBE letters and number are sprites and remain separately live.
     strip=Image.new('RGBA',(1024,960))
@@ -241,12 +228,7 @@ def build_finale(assets, poses_file, patterns, save, rules, register, slot, font
         surface[(0x606+value,BATTLE_COLORS[0])]=image
 
     sinking={}
-    dead=Image.new('RGBA',(96,192))
-    shark=trim(art('sinking-shark').convert('RGBA')).resize((91,169),LANCZOS)
-    # The bottom two rows have no right-hand tile. Aim the snout down the
-    # middle of the second column and keep the broad fins above that gap.
-    dead.alpha_composite(shark,(0,0))
-    add_tiles(sinking,dead,poses['sink'][0],0x400,('','','FF200300',''))
+    build_descent(art('sinking-shark'),poses['sink'][0],rules,save,SINK,sinking)
 
     flying={}
     plane=trim(art('plane-front').convert('RGBA'))

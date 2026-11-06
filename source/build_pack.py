@@ -334,7 +334,7 @@ for t in [0x108,0x109,0x10a]:
   for j in range(4):
    pa=rr['pa'];register(t,bytes([pa[0],*pa[j*4+1:j*4+4]]).hex().upper(),ix,'HudS&HudJ')
 from finale import build_finale
-build_finale(G, project_dir/'data/finale-poses.json', chrtiles, artfile, rules, register, slot, font, vector)
+build_finale(G, project_dir/'data/finale-poses.json', rom, chrtiles, artfile, rules, register, slot, font, vector)
 # Emit a single indexed tile atlas and a readable Mesen definition file.
 atlas=Image.new('RGBA',(512,((len(arena)+15)//16)*32))
 for i,im in enumerate(arena):atlas.paste(im,((i%16)*32,(i//16)*32))
