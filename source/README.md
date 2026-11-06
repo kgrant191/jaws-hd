@@ -1,4 +1,4 @@
-# Jaws HD v0.9.0
+# Jaws HD v1.0.0
 
 Editable source for the MesenCE 2.2.1 4× graphics pack.
 
