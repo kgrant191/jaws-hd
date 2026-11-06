@@ -246,7 +246,8 @@ grid(fitted(boatobj,(128,96),(0,5,124,86)),[4,5,6,None,0x14,0x15,0x16,0x17,0x24,
 bonus_plane(custom,G,vector)
 shark_hit, wounded_jaws = sharks(custom,G)
 impact_bubbles(custom,vector)
-map_fins(custom,chrtiles,json.loads((project_dir/"data/fin-poses.json").read_text()))
+fin_layouts = json.loads((project_dir/'data/fin-poses.json').read_text())
+map_fins(custom, chrtiles, fin_layouts)
 ordnance(custom)
 harpoon=vector(8,8,'<path d="M.4 3.5L5.5 3.5 5.5 2.25 7.9 4 5.5 5.45 5.5 4.5 .4 4.5Z" fill="#e1efce" stroke="#225163" stroke-width=".28"/>')
 custom[0x420]=harpoon
@@ -347,6 +348,14 @@ for t in [0x108,0x109,0x10a]:
    pa=rr['pa'];register(t,bytes([pa[0],*pa[j*4+1:j*4+4]]).hex().upper(),ix,'HudS&HudJ')
 from finale import build_finale
 build_finale(G, project_dir/'data/finale-poses.json', rom, chrtiles, artfile, rules, register, slot, font, vector)
+# Fill gaps in the recordings from the complete map-fin layouts. Append
+# these cells so that existing atlas slots keep their original coordinates.
+fin_palette = 'FF' + map_colors[25:28].hex().upper()  # NES sprite palette 2
+for layout in fin_layouts:
+ for tile, _, _ in layout:
+  index = 0x200 + tile
+  if ('MapA&MapB', index, fin_palette) not in mappings:
+   register(index, fin_palette, slot(custom[index]), 'MapA&MapB')
 # Emit a single indexed tile atlas and a readable Mesen definition file.
 atlas=Image.new('RGBA',(512,((len(arena)+15)//16)*32))
 for i,im in enumerate(arena):atlas.paste(im,((i%16)*32,(i//16)*32))
