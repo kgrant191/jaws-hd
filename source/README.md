@@ -62,3 +62,9 @@ The 3,604-frame ending recording covers the last underwater hit, all six meter p
 The game accepts the fatal thrust while Jaws is in the eight-by-eight contact window. The finishing artwork uses both the native success flag and the rendered impact tile at the bow tip. It stays aligned to the spike in either facing direction. The underwater descent uses a separate wounded dorsal view. Earlier underwater encounters follow the existing half-health and defeat rules.
 
 The ending recording includes a missed strobe attack and a successful strike. Supplementary input replays fire earlier to exercise the three farther strobe distances.
+
+## Map and pickups in v0.8.0
+
+The overworld camera reaches x=264, but the horizontal scroll sent to the PPU wraps at 256. Near the eastern boundary, `coast-east.png` supplies two continuous 256-pixel viewports into the eastern part of the chart. The lower scroll bytes 0–8 and upper bytes 244–255 use separate sections of that texture. The original 1,723-frame playthrough crosses the boundary heading east and west. A second steering check crosses it three times at the northern camera limit.
+
+The transceiver uses the original idle oscilloscope line and eight pulse positions written to $2F6F–$2F70. Its lower HUD cells display the corresponding HD waveform. The sea star uses the game's face-on, angled and edge-on poses and mirrors the latter two during its rotation. The southbound hull and both wake tips fit within the stern's two native sprite columns.

@@ -11,7 +11,7 @@ A 4× graphics pack for the NES game *Jaws*, tested with MesenCE 2.2.1. It inclu
 
 ## Current build
 
-**v0.7.1.** Jaws breaches at four distances and towers above the bow on the closest pass. He emerges with clean skin. A successful thrust reveals a bloody puncture at the tip of the spike, and the wounds remain visible as he sinks.
+**v0.8.0.** The sea star turns from face-on to edge-on as it falls. The transceiver displays the game's signal pulse, and the boat leaves a wake on both sides when heading south. The eastern harbor stays in view when sailing along the northeast map boundary.
 
 The install ZIP includes the three jellyfish appearances used by the default mixed mode. The optional single-style configurations are available in the repository and source build.
 

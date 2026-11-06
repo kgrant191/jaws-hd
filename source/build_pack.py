@@ -72,6 +72,20 @@ rules.extend(('<condition>WestEdge,memoryCheckConstant,0339,==,FF',
               '<condition>NearWestEdge,memoryCheckConstant,0338,<,05'))
 for edge_guard in ('WestEdge','MapPageZero&NearWestEdge'):
  bg('MapA&MapB&'+edge_guard,'coast-west.png',11,1,1.0625)
+# The game clamps the camera to x=264 but only sends its low byte to
+# the PPU. At the eastern edge $FF -> $00 means 255 -> 256 in the chart.
+# With 21/256 extra scroll, PPU 244..255 receives a fixed +20 offset
+# and 0..8 receives zero. Their full 256-pixel viewports fit side by side.
+east = coast.crop((256*4, 0, 512*4, coast.height))
+edge = Image.new('RGB', (532*4, coast.height))
+edge.paste(east, (0, 0))
+edge.paste(east.crop((248*4, 0, 256*4, east.height)).transpose(Image.Transpose.FLIP_LEFT_RIGHT), (256*4, 0))
+edge.paste(coast.crop((244*4, 0, 512*4, coast.height)), (264*4, 0))
+artfile(edge, 'coast-east.png')
+rules.extend(('<condition>MapPageOne,memoryCheckConstant,0339,==,01',
+              '<condition>NearEastEdge,memoryCheckConstant,0338,>,F7'))
+for edge_guard in ('MapPageOne', 'MapPageZero&NearEastEdge'):
+ bg('MapA&MapB&'+edge_guard, 'coast-east.png', 11, 1, 1+21/256)
 # Surface water and the underwater plate share the original world waterline.
 full=Image.new('RGB',(1024,1920),'#052c39'); cap=asset('title-master').convert('RGB')
 sky=cap.crop((270,0,cap.width,468)).resize((1024,426),Image.Resampling.LANCZOS);full.paste(sky)
@@ -234,8 +248,6 @@ shark_hit, wounded_jaws = sharks(custom,G)
 impact_bubbles(custom,vector)
 map_fins(custom,chrtiles,json.loads((project_dir/"data/fin-poses.json").read_text()))
 ordnance(custom)
-star=vector(16,16,'<path d="M8 1.2L9.7 5.9 14.8 5.6 11 9.2 12.4 14.5 8 11.5 3.4 14.5 4.7 9.2 1 5.6 6.1 6Z" fill="#e59a48" stroke="#83451b" stroke-width=".6"/><path d="M8 2.2L8 8 2.2 6.25 8 9 4.1 13.4 8.3 9 12 13 9.3 8.4 13.3 6.25 8.5 7.6Z" fill="#f7c77b"/>')
-grid(star,[0xfc,0xfd,0xee,0xef],2)
 harpoon=vector(8,8,'<path d="M.4 3.5L5.5 3.5 5.5 2.25 7.9 4 5.5 5.45 5.5 4.5 .4 4.5Z" fill="#e1efce" stroke="#225163" stroke-width=".28"/>')
 custom[0x420]=harpoon
 # Conventional 4x treatment for remaining live effects and transitions; map

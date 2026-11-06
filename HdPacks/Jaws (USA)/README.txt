@@ -1,11 +1,11 @@
-Jaws HD v0.7.1
+Jaws HD v0.8.0
 4× NES graphics pack for MesenCE 2.2.1
 
 INSTALL
 Close the ROM. Extract Jaws (USA) into MesenCE's HdPacks folder and replace the previous Jaws HD folder. The active file should be HdPacks/Jaws (USA)/hires.txt. If your ROM uses a different filename, rename the pack folder to the ROM name without .nes. Enable NES HD packs and reopen the game.
 
 IN THIS BUILD
-The final shark grows with distance and reaches a 400-pixel breach at close range. The bow strike switches him from clean skin to a visible belly wound. The enlarged sinking shark carries the injury into the underwater shot.
+The underwater sea star has a painted spin cycle. The receiver's scope follows the original signal pulse. The southbound wake is visible on both sides of the stern, and the map keeps its eastern coastline when the boat crosses the northeast scroll boundary.
 
 JELLYFISH
 Mixed mode gives Moon Jelly, Amber Sea Nettle and Electric Blue an equal share of the choices. A jellyfish keeps its appearance throughout its animation. The install ZIP includes the runtime files for mixed mode. In the repository or a source build, to force one style, copy its hires.txt from Jellyfish Options into the pack root and reopen the ROM. Copy Jellyfish Options/Mixed/hires.txt back to restore variation.
