@@ -7,18 +7,26 @@ from sprite_motion import trim, deform, subtle_outline, register_tiles
 LANCZOS = Image.Resampling.LANCZOS
 
 
-def shark_pose(master, juvenile):
-    width = 128 if juvenile else 192
+def adult_pose(master):
+    # Only the first four columns have upper tiles. Place the unwarped
+    # shoulder below row 32, letting the dorsal and tail fill the upper row.
+    base = Image.new('RGBA', (192, 96))
+    base.alpha_composite(trim(master).resize((189, 76), LANCZOS), (1, 18))
+    return subtle_outline(base, (9, 33, 43, 100))
+
+
+def juvenile_pose(master):
+    width = 128
     height = 96
     shark = trim(master)
     base = Image.new('RGBA', (width, height))
-    pose_size = (width-3, 55 if juvenile else 79)
-    base.alpha_composite(shark.resize(pose_size, LANCZOS), (1, 16 if juvenile else 8))
+    pose_size = (width-3, 55)
+    base.alpha_composite(shark.resize(pose_size, LANCZOS), (1, 16))
     # The juvenile has only one lower-fin cell and two isolated upper cells.
     # Compress fin tips into those cells while keeping the eye and belly aligned.
     pixels = np.asarray(base.convert('RGBa'))
     yy, xx = np.indices((height, width), dtype=float)
-    axis = 48 if juvenile else 52
+    axis = 48
     top_scale = np.ones(width)
     bottom_scale = np.ones(width)
     for x in range(width):
@@ -26,13 +34,9 @@ def shark_pose(master, juvenile):
         if len(opaque) < 3:
             continue
         top, bottom = opaque[[0,-1]]
-        if juvenile:
-            top_room = np.interp(x,[0,23,31,32,56,60,64,78,87,88,127],
+        top_room = np.interp(x,[0,23,31,32,56,60,64,78,87,88,127],
                                   [7,8,31,33,33,32,9,9,31,33,33])
-            floor = np.interp(x,[0,51,52,58,76,83,84,127],[62,62,63,81,81,63,62,62])
-        else:
-            top_room = np.interp(x,[0,120,127,128,191], [2,2,31,33,33])
-            floor = 93
+        floor = np.interp(x,[0,51,52,58,76,83,84,127],[62,62,63,81,81,63,62,62])
         if top < axis:
             top_scale[x] = min(1,(axis-top_room)/(axis-top))
         if bottom > axis:
@@ -48,8 +52,8 @@ def shark_pose(master, juvenile):
 def sharks(store, assets):
     with Image.open(assets/'sharks.png') as source:
         art = source.convert('RGBA')
-    juvenile = shark_pose(art.crop((0,0,art.width,414)),True)
-    adult = shark_pose(art.crop((0,414,art.width,art.height)),False)
+    juvenile = juvenile_pose(art.crop((0,0,art.width,414)))
+    adult = adult_pose(art.crop((0,414,art.width,art.height)))
     for phase,(tail,dorsal,fin,body) in enumerate(((0x64,0x66,0x67,0x68),
                                                   (0x65,0x76,0x77,0x78),
                                                   (0x64,0x86,0x87,0x88))):
@@ -75,6 +79,14 @@ def sharks(store, assets):
     hit_cells = [(0x65,0,0),(0x76,16,0),(0x77,16,16),
                  (0x78,0,8),(0x79,8,8),(0x7a,16,8),(0xa8,24,8)]
     register_tiles(damaged,Image.fromarray(rgba),hit_cells,0x400)
+    register_adult(store, adult)
+    wounded = {}
+    with Image.open(assets/'shark-wounded.png') as source:
+        register_adult(wounded, adult_pose(source.convert('RGBA')))
+    return damaged, wounded
+
+
+def register_adult(store, adult):
     # Tail and body cycles are selected separately by the original renderer.
     # Lock their shared joint and animate the jaw in the second head pose.
     y,x = np.indices((96,192),dtype=float)
@@ -96,7 +108,6 @@ def sharks(store, assets):
              for row,count in enumerate((4,6,6)) for col in range(2,count)]
     register_tiles(store,closing,cells,0x400)
 
-    return damaged
 
 
 def shallows(assets, full, destination, save, bg):
@@ -137,7 +148,9 @@ def coastline(assets, previous, save):
     mask = Image.fromarray(np.tile(np.uint8(255*alpha),(2,1))).resize((1024,1536))
     extension.paste(west,(0,0),mask)
     out = Image.new('RGB',(2048,1920),'#08171c')
+    out.paste(extension.crop((0,0,2048,128)).transpose(Image.Transpose.FLIP_TOP_BOTTOM),(0,0))
     out.paste(extension,(0,128))
+    out.paste(extension.crop((0,1280,2048,1536)).transpose(Image.Transpose.FLIP_TOP_BOTTOM),(0,1664))
     save(out,'coast.png')
 
 

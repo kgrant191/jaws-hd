@@ -11,9 +11,9 @@ A 4× graphics pack for the NES game *Jaws*, tested with MesenCE 2.2.1. It inclu
 
 ## Current build
 
-**v0.5.2.** The overhead boat keeps its hull through turns and stops. The western map scrolls continuously, and the harbor shell message and Jaws encounter each display in their own HD banner.
+**v0.6.0.** Jaws has a continuous head profile and shows wounds at or below half health. The coastal map stays painted as new columns scroll in. The receiver, harbor approach and power-up message use HD artwork.
 
-Mixed jellyfish are enabled by default. Moon Jelly, Amber Sea Nettle and Electric Blue each have an equal chance of selection. Single-style options and switching instructions are in the pack folder.
+The install ZIP includes the three jellyfish appearances used by the default mixed mode. The optional single-style configurations are available in the repository and source build.
 
 ## Rebuild
 

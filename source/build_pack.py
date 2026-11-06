@@ -64,6 +64,7 @@ bg('MapA&MapB','coast.png',10,1,1)
 coast = Image.open(P/'coast.png').convert('RGB')
 westedge = Image.new('RGB', (527*4,1920), '#08171c')
 westedge.paste(coast.crop((0,0,263*4,1920)),(0,0))
+westedge.paste(coast.crop((0,0,8*4,1920)).transpose(Image.Transpose.FLIP_LEFT_RIGHT),(263*4,0))
 westedge.paste(coast.crop((0,0,256*4,1920)),(271*4,0))
 artfile(westedge,'coast-west.png')
 rules.extend(('<condition>WestEdge,memoryCheckConstant,0339,==,FF',
@@ -100,7 +101,7 @@ zero=slot(Image.new('RGBA',(32,32)))
 mappings={}
 def register(tile,pal,ind,guard=''):
  mappings[(guard,tile,pal)]=ind
-for start,n,guard in [(0x300,600,'MapA&MapB'),(0x500,1200,'DiveA&DiveB'),(0x500,4656,'ShallowA&ShallowB')]:
+for start,n,guard in [(0x500,1200,'DiveA&DiveB'),(0x500,4656,'ShallowA&ShallowB')]:
  r=R[n]
  samples={n}
  if n==1200:samples.update([840,1080,8400])
@@ -120,20 +121,14 @@ for start,n,guard in [(0x300,600,'MapA&MapB'),(0x500,1200,'DiveA&DiveB'),(0x500,
     for pp in range(4):
      palstr=bytes([r['pa'][0],*r['pa'][pp*4+1:pp*4+4]]).hex().upper()
      register(start+i+off,palstr,zero,guard)
-# All 32 east-west map columns stream through one physical nametable.
-# Decode the ROM's 32 by 24 metatile chart and packed attribute columns.
-chart = np.frombuffer(rom[16+0x7700:16+0x7a00],np.uint8).reshape(32,24).T
-attr = np.frombuffer(rom[16+0x7a00:16+0x7ad0],np.uint8).reshape(16,13)
-metatiles = np.frombuffer(rom[16+0x7b00:16+0x7e00],np.uint8).reshape(-1,4)
-for (row,col),identity in np.ndenumerate(chart):
- localrow = row if row<13 else row-13
- entry = localrow//2+(0 if row<13 else 7)
- shift = (localrow%2)*4+(col%2)*2
- group = (int(attr[col//2,entry])>>shift)&3
- colors = R[600]['pa']
- key = bytes([colors[0],*colors[group*4+1:group*4+4]]).hex().upper()
- for tileid in metatiles[identity]:
-  register(0x300+int(tileid),key,zero,'MapA&MapB')
+# A scrolling column is uploaded before its attribute byte. For one frame a
+# terrain tile can have its neighbor's palette. The chart has its own CHR
+# page, distinct from the boat sprites and the shared HUD font.
+map_colors = R[600]['pa']
+for index in range(0, 16, 4):
+ key = bytes([map_colors[0], *map_colors[index+1:index+4]]).hex().upper()
+ for tile in range(0x300, 0x400):
+  register(tile, key, zero, 'MapA&MapB')
 # A compact marine instrument strip. Values and Jaws' meter continue to be
 # drawn from the game's live nametable and remain directly over this background.
 body=Image.new('RGBA',size);d=ImageDraw.Draw(body);d.rectangle((0,800,1023,959),fill='#0b1b21');d.rectangle((0,800,1023,802),fill='#81938b')
@@ -146,6 +141,7 @@ for variant,gate in [('plain',''),('power','&PowerHud'),('hits','&HitsHud')]:
  for x,label,col in [(34,'SCORE','#b5d5ce'),(289,'SHELLS','#f6cb85'),(640,'JAWS’ POWER','#e9b08a')]:
   text(panel,(x,848),label,24,col,'ls',True)
  if variant!='plain':text(panel,(480,848),variant.upper(),24,'#b5d5ce','ls',True)
+ d.rectangle((0,948,1023,959),fill='#0b1b21')
  artfile(panel,f'hud-{variant}.png')
 # Higher priority header paint for the two live variants, with base header below.
 bg('HudS&HudJ','hud-plain.png',21);bg('HudS&HudJ&PowerHud','hud-power.png',22);bg('HudS&HudJ&HitsHud','hud-hits.png',22)
@@ -228,10 +224,13 @@ def clean(col,row):
 diver,boatobj,ray,shell=[clean(i%3,i//3) for i in (0,1,4,5)]
 def fitted(obj,canvas,rect):
  im=Image.new('RGBA',canvas);x,y,w,h=rect;im.alpha_composite(obj.resize((w,h),Image.Resampling.LANCZOS),(x,y));return im
+from harbor import build_harbor
+build_harbor(G, boatobj, vector, text, artfile, rules, register, slot)
+
 # Surface boat and bonus plane each follow the game's own sprite coordinates.
 grid(fitted(boatobj,(128,96),(0,5,124,86)),[4,5,6,None,0x14,0x15,0x16,0x17,0x24,0x25,0x26,0x27],4)
 bonus_plane(custom,G,vector)
-shark_hit=sharks(custom,G)
+shark_hit, wounded_jaws = sharks(custom,G)
 impact_bubbles(custom,vector)
 map_fins(custom,chrtiles,json.loads((project_dir/"data/fin-poses.json").read_text()))
 ordnance(custom)
@@ -257,6 +256,16 @@ for window, layer in zip(('HitEarly','HitMiddle'),impact_layers[:2]):
   idx = slot(image)
   for palette in observed.get(('DiveA&DiveB',tile),[]):
    rules.append(f'[DiveA&DiveB&{window}]<tile>0,{tile:X},{palette},{idx%16*32},{idx//16*32},1,N')
+# Jaws starts at $1400. The hit routine subtracts a 16-bit amount at
+# $0388-$0389. The HUD only displays the integer part of that quantity.
+rules.extend(('<condition>BelowHalf,memoryCheckConstant,0389,<,0A',
+              '<condition>HalfHigh,memoryCheckConstant,0389,==,0A',
+              '<condition>HalfLow,memoryCheckConstant,0388,==,00'))
+for tile, image in wounded_jaws.items():
+ index = slot(image)
+ for hp_guard in ('BelowHalf', 'HalfHigh&HalfLow'):
+  rules.append(f'[DiveA&DiveB&{hp_guard}]<tile>0,{tile:X},FF200300,{index%16*32},{index//16*32},1,N')
+
 # The south-facing idle pose reuses upper pieces from its moving animation.
 # Resolve these tiles using the boat's own stopped-pose pointer.
 rules.append('<condition>SouthIdleLo,memoryCheckConstant,0688,==,78')
